@@ -11,18 +11,17 @@ class Ticket extends Model
         'code',
         'title',
         'description',
-        'status',
         'priority',
-        'compeleted_at',
+        'status'
     ];
+
+    public function replies()
+    {
+        return $this->hasMany(TicketReplay::class);
+    }
 
     public function user()
     {
         return $this->belongsTo(User::class);
-    }
-
-    public function ticketReplies()
-    {
-        return $this->hasMany(TicketReplay::class);
     }
 }

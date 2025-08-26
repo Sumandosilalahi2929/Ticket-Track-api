@@ -8,6 +8,8 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Resources\TicketResource;
 use App\Http\Requests\TicketStoreRequest;
+use App\Http\Requests\TicketReplyStoreRequest;
+use App\Models\TicketReplay;
 
 class TicketController extends Controller
 {
@@ -44,7 +46,8 @@ class TicketController extends Controller
     public function getAll()
     {
         try {
-            $tickets = Ticket::all();
+            $tickets = Ticket::with(['replies.user'])->get();
+
             return response()->json([
                 'message' => 'Daftar tiket berhasil diambil',
                 'data' => TicketResource::collection($tickets)
@@ -60,7 +63,7 @@ class TicketController extends Controller
     public function show($id)
     {
         try {
-            $ticket = Ticket::find($id);
+            $ticket = Ticket::with(['replies.user'])->find($id);
 
             if (!$ticket) {
                 return response()->json([
@@ -134,6 +137,48 @@ class TicketController extends Controller
             DB::rollBack();
             return response()->json([
                 'message' => 'Gagal menghapus tiket',
+                'error' => $th->getMessage()
+            ], 500);
+        }
+    }
+
+    public function storeReply(TicketReplyStoreRequest $request, $code)
+    {
+        $data = $request->validated();
+
+        DB::beginTransaction();
+
+        try {
+            $ticket = Ticket::where('code', $code)->first();
+
+            if (!$ticket) {
+                return response()->json([
+                    'message' => 'Tiket tidak ditemukan'
+                ], 404);
+            }
+
+            if (Auth::user()->role == 'user' && $ticket->user_id != Auth::user()->id) {
+                return response()->json([
+                    'message' => 'Anda tidak diperbolehkan membalas tiket ini'
+                ], 403);
+            }
+
+            $ticketReply = new TicketReplay();
+            $ticketReply->ticket_id = $ticket->id;
+            $ticketReply->user_id = Auth::user()->id;
+            $ticketReply->content = $data['content'];
+            $ticketReply->save();
+
+            DB::commit();
+
+            return response()->json([
+                'message' => 'Balasan tiket berhasil ditambahkan',
+                'data' => $ticketReply
+            ], 201);
+        } catch (\Throwable $th) {
+            DB::rollBack();
+            return response()->json([
+                'message' => 'Gagal membuat balasan tiket',
                 'error' => $th->getMessage()
             ], 500);
         }

@@ -31,5 +31,13 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('tickets/{id}', 'show');
         Route::put('tickets/{id}', 'update');
         Route::delete('tickets/{id}', 'destroy');
+
+        Route::post('tickets/{code}/replies', 'storeReply');
+        Route::get('tickets/{code}/replies', 'getReplies');
     });
+
+    // Route::controller(TicketController::class)->group(function () {
+    //     Route::post('tickets/{code}/replies', 'storeReply');
+    //     Route::get('tickets/{code}/replies', 'getReplies');
+    // });
 });
