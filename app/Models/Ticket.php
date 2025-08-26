@@ -10,7 +10,7 @@ class Ticket extends Model
         'user_id',
         'code',
         'title',
-        'desciption',
+        'description',
         'status',
         'priority',
         'compeleted_at',
